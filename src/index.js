@@ -1,62 +1,63 @@
-import axios from 'axios';
 import Notiflix from 'notiflix';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
-
+import { makeRequest } from './Pixabay_API';
 
 const refs = {
     form: document.querySelector('.search-form'),
     btnSubmit: document.querySelector(".submit"),
     gallery: document.querySelector('.gallery'),
-    btnLoad: document.querySelector('.load-more')
+    btnLoad: document.querySelector('.load-more'),
+    guard: document.querySelector('.js-guard')
 }
 
-console.log(refs.form);
-console.log(refs.btnSubmit);
+const largeImg = new SimpleLightbox('.gallery a', {
+  captionPosition: 'bottom', captionsData: `alt`, navText: ['←', '→']
+});
 
-async function makeRequest(pixInform) {
-  const API_KEY = "38353563-faefe35241da6d2bdd21486de";
-  const BASE_URL = 'https://pixabay.com/api/'; 
-  axios.defaults.headers.common["x-api-key"] = API_KEY;
-  axios.defaults.baseURL = BASE_URL; 
+let page = 1;
+let isShown = 0;
 
-  // const response = await axios.get('https://pixabay.com/api/?key=38353563-faefe35241da6d2bdd21486de&q=cat&image_type=photo&orientation=horizontal&safesearch=true')
-    const response = await axios.get(`?key=${API_KEY}&q=${pixInform}&image_type=photo&orientation=horizontal&safesearch=true`)
-
-    // const response = await fetch(`https://pixabay.com/api/?key=38353563-faefe35241da6d2bdd21486de&q=${pixInform}&image_type=photo&orientation=horizontal&safesearch=true`);
-    // return response.json();
-    return response.data;
-
-}
+refs.btnLoad.classList.add('is-hidden');
 
 refs.form.addEventListener('submit', handlerRequest);
+refs.btnLoad.addEventListener('click', onLoadMore);
 
-function handlerRequest(e) {
+async function handlerRequest(e) {
   e.preventDefault();
-  const pixInform = e.target.elements.searchQuery.value;
-  console.log(pixInform);
-
-  makeRequest(pixInform)
-  .then(data => {
-      refs.gallery.insertAdjacentHTML('beforeend', createMarkup(data.hits));
-      const largeImg = new SimpleLightbox('.gallery a', {
-        captionPosition: 'bottom', captionsData: `alt`, navText: ['←', '→']
-      });
-      largeImg.refresh();
-
-      if (data.hits.length === 0) {
-        Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again');
-      }
+  searchQuery = e.target.elements.searchQuery.value.trim();
+  refs.btnLoad.classList.add('is-hidden');
+  refs.gallery.innerHTML = '';
+  resetPage();
+  try {
+    const data = await makeRequest(searchQuery, page);
+    // console.log(data)
+    createMarkup(data.hits);
+    isShown += data.hits.length;
+    if (data.hits.length === 0) {
+      Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again');
+      refs.btnLoad.classList.add('is-hidden');
+    } else {
+      Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`)
     }
-   ) .catch (err => console.error(err))
-    .finally(e.target.reset());
+    if (isShown <= data.totalHits) {
+      refs.btnLoad.classList.remove('is-hidden');
+      observer.observe(refs.guard);
+    }
   }
+  catch (err) {
+    console.error(err);
+  }
+  finally {
+    e.target.reset()
+  }
+}  
 
 function createMarkup(arr) {
-    return arr.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => `
-   <a class="gallery__link" href=${largeImageURL}>
+  const markupList = arr.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => {
+    return `<a class="gallery__link" href=${largeImageURL}>
     <div class="photo-card">
-  <img src="${webformatURL}" alt="${tags}" loading="lazy" width="400" height="270"/>
+  <img src="${webformatURL}" alt="${tags}" loading="lazy" width="400" height="200"/>
   <div class="info">
     <p class="info-item">
       <b>Likes ${likes}</b>
@@ -71,6 +72,66 @@ function createMarkup(arr) {
       <b>Downloads ${downloads}</b>
     </p>
   </div>
-</div>`).join('')
+</div>`}).join('');
+  refs.gallery.insertAdjacentHTML('beforeend', markupList);
+  largeImg.refresh();
+}
+
+function resetPage() {
+  page = 1;
+}
+
+async function onLoadMore() {
+  try {
+    page += 1;
+    const data = await makeRequest(searchQuery, page);
+    createMarkup(data.hits)
+    isShown += data.hits.length;
+    if (isShown >= data.totalHits) {
+    refs.btnLoad.classList.add('is-hidden');
+    Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+    }
+    scroll();
+  }
+  catch (err) {
+    console.error(err);
+    } 
+}
+
+function scroll() {
+  const { height: cardHeight } = document
+    .querySelector(".gallery")
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: "smooth",
+  });
+}
+
+const options = {
+    root: null,
+    rootMargin: "500px",
+    threshold: 0,
+};
+
+const observer = new IntersectionObserver(handelerPagination, options);
+async function handelerPagination(entries, observer) {
+  entries.forEach(async entry => {
+    if (entry.isIntersecting) {
+      page += 1;
+    }
+      try {
+        const data = await makeRequest(searchQuery, page);
+        createMarkup(data.hits)
+        if (data.hits.length >= data.totalHits) {
+          observer.unobserve(entry.target);
+          Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+        }
+      }
+      catch (err) {
+        console.log(err)
+      }
+    });
 }
 
