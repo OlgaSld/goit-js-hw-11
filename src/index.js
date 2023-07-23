@@ -16,7 +16,6 @@ const largeImg = new SimpleLightbox('.gallery a', {
 });
 
 let page = 1;
-let isShown = 0;
 
 refs.btnLoad.classList.add('is-hidden');
 
@@ -25,25 +24,31 @@ refs.btnLoad.addEventListener('click', onLoadMore);
 
 async function handlerRequest(e) {
   e.preventDefault();
+  observer.unobserve(refs.guard);
   searchQuery = e.target.elements.searchQuery.value.trim();
-  refs.btnLoad.classList.add('is-hidden');
   refs.gallery.innerHTML = '';
+  if (!searchQuery) {
+    return
+  }
   resetPage();
   try {
     const data = await makeRequest(searchQuery, page);
     // console.log(data)
-    createMarkup(data.hits);
-    isShown += data.hits.length;
     if (data.hits.length === 0) {
       Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again');
       refs.btnLoad.classList.add('is-hidden');
     } else {
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`)
-    }
-    if (isShown <= data.totalHits) {
       refs.btnLoad.classList.remove('is-hidden');
-      observer.observe(refs.guard);
     }
+    createMarkup(data.hits);
+
+    if (page === Math.ceil(data.totalHits / 40)) {
+      refs.btnLoad.classList.add('is-hidden');
+      Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+      return
+    }
+    observer.observe(refs.guard);
   }
   catch (err) {
     console.error(err);
@@ -86,8 +91,8 @@ async function onLoadMore() {
     page += 1;
     const data = await makeRequest(searchQuery, page);
     createMarkup(data.hits)
-    isShown += data.hits.length;
-    if (isShown >= data.totalHits) {
+      if (page === Math.ceil(data.totalHits / 40))
+      {
     refs.btnLoad.classList.add('is-hidden');
     Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
     }
@@ -118,15 +123,17 @@ const options = {
 const observer = new IntersectionObserver(handelerPagination, options);
 async function handelerPagination(entries, observer) {
   entries.forEach(async entry => {
-    if (entry.isIntersecting) {
-      page += 1;
-    }
       try {
-        const data = await makeRequest(searchQuery, page);
-        createMarkup(data.hits)
-        if (data.hits.length >= data.totalHits) {
-          observer.unobserve(entry.target);
-          Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+        if (entry.isIntersecting) {
+          page += 1;
+          const data = await makeRequest(searchQuery, page);
+          createMarkup(data.hits)
+    
+          if (page === Math.ceil(data.totalHits / 40)) {
+            observer.unobserve(entry.target);
+            Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+            return;
+          }
         }
       }
       catch (err) {
