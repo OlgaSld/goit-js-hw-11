@@ -25,8 +25,7 @@ refs.btnLoad.addEventListener('click', onLoadMore);
 async function handlerRequest(e) {
   e.preventDefault();
   observer.unobserve(refs.guard);
-  const searchQuery = e.currentTarget.elements.searchQuery.value.trim();
-  console.log(searchQuery);
+  searchQuery = e.currentTarget.elements.searchQuery.value.trim();
   refs.gallery.innerHTML = '';
   if (!searchQuery) {
     return
