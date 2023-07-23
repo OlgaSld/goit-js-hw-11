@@ -16,6 +16,7 @@ const largeImg = new SimpleLightbox('.gallery a', {
 });
 
 let page = 1;
+let searchQuery = '';
 
 refs.btnLoad.classList.add('is-hidden');
 
