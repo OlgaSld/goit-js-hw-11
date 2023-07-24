@@ -118,15 +118,22 @@ const options = {
 const observer = new IntersectionObserver(handelerPagination, options);
 async function handelerPagination(entries, observer) {
   entries.forEach(async entry => {
-    try {
-      if (entry.isIntersecting) {
-          if ((page === 1) && (page === Math.ceil(data.totalHits / 40))) {
+          if (page === 1) {
+          entry.preventDefault();
+        } else {
           observer.observe(refs.guard);
-          onLoadMore().stop
-      }
+        }
+
+    try {
+
+      if (entry.isIntersecting) {
+      //     if ((page === 1) && (page === Math.ceil(data.totalHits / 40))) {
+      //     observer.observe(refs.guard);
+      // }
+        
           page += 1;
           const data = await makeRequest(searchQuery, page);
-          createMarkup(data.hits)
+        createMarkup(data.hits)
           if (page === Math.ceil(data.totalHits / 40)) {
             observer.unobserve(entry.target);
             Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
@@ -136,7 +143,7 @@ async function handelerPagination(entries, observer) {
         }
     }
       catch (err) {
-        console.log(err)
+        console.error(err)
       }
     });
 }
