@@ -18,10 +18,10 @@ const largeImg = new SimpleLightbox('.gallery a', {
 let page = 1;
 let searchQuery = '';
 
-refs.btnLoad.classList.add('is-hidden');
+// refs.btnLoad.classList.add('is-hidden');
 
 refs.form.addEventListener('submit', handlerRequest);
-refs.btnLoad.addEventListener('click', onLoadMore);
+// refs.btnLoad.addEventListener('click', onLoadMore);
 
 async function handlerRequest(e) {
   e.preventDefault();
@@ -37,15 +37,15 @@ async function handlerRequest(e) {
     // console.log(data)
     if (data.hits.length === 0) {
       Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again');
-      refs.btnLoad.classList.add('is-hidden');
+      // refs.btnLoad.classList.add('is-hidden');
     } else {
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`)
-      refs.btnLoad.classList.remove('is-hidden');
+      // refs.btnLoad.classList.remove('is-hidden');
     }
     createMarkup(data.hits);
 
     if (page === Math.ceil(data.totalHits / 40)) {
-      refs.btnLoad.classList.add('is-hidden');
+      // refs.btnLoad.classList.add('is-hidden');
       Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
       return
     }
@@ -87,22 +87,22 @@ function resetPage() {
   page = 1;
 }
 
-async function onLoadMore() {
-  try {
-    page += 1;
-    const data = await makeRequest(searchQuery, page);
-    createMarkup(data.hits)
-      if (page === Math.ceil(data.totalHits / 40))
-      {
-    refs.btnLoad.classList.add('is-hidden');
-    Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
-    }
-    scroll();
-  }
-  catch (err) {
-    console.error(err);
-    } 
-}
+// async function onLoadMore() {
+//   try {
+//     page += 1;
+//     const data = await makeRequest(searchQuery, page);
+//     createMarkup(data.hits)
+//       if (page === Math.ceil(data.totalHits / 40))
+//       {
+//     refs.btnLoad.classList.add('is-hidden');
+//     Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+//     }
+//     scroll();
+//   }
+//   catch (err) {
+//     console.error(err);
+//     } 
+// }
 
 function scroll() {
   const { height: cardHeight } = document
