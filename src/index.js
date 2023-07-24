@@ -123,14 +123,8 @@ async function handelerPagination(entries, observer) {
         } else {
           observer.observe(refs.guard);
         }
-
     try {
-
       if (entry.isIntersecting) {
-      //     if ((page === 1) && (page === Math.ceil(data.totalHits / 40))) {
-      //     observer.observe(refs.guard);
-      // }
-        
           page += 1;
           const data = await makeRequest(searchQuery, page);
         createMarkup(data.hits)
