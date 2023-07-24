@@ -1,15 +1,9 @@
 import Notiflix from 'notiflix';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
-import { makeRequest } from './Pixabay_API';
+import { makeRequest } from './js/Pixabay_API';
+import { refs } from './js/refs';
 
-const refs = {
-    form: document.querySelector('.search-form'),
-    btnSubmit: document.querySelector(".submit"),
-    gallery: document.querySelector('.gallery'),
-    btnLoad: document.querySelector('.load-more'),
-    guard: document.querySelector('.js-guard')
-}
 
 const largeImg = new SimpleLightbox('.gallery a', {
   captionPosition: 'bottom', captionsData: `alt`, navText: ['←', '→']
@@ -18,10 +12,10 @@ const largeImg = new SimpleLightbox('.gallery a', {
 let page = 1;
 let searchQuery = '';
 
-// refs.btnLoad.classList.add('is-hidden');
+refs.btnLoad.classList.add('is-hidden');
 
 refs.form.addEventListener('submit', handlerRequest);
-// refs.btnLoad.addEventListener('click', onLoadMore);
+refs.btnLoad.addEventListener('click', onLoadMore);
 
 async function handlerRequest(e) {
   e.preventDefault();
@@ -37,20 +31,20 @@ async function handlerRequest(e) {
     // console.log(data)
     if (data.hits.length === 0) {
       Notiflix.Notify.failure('Sorry, there are no images matching your search query. Please try again');
-      // refs.btnLoad.classList.add('is-hidden');
+      refs.btnLoad.classList.add('is-hidden');
     } else {
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`)
-      // refs.btnLoad.classList.remove('is-hidden');
+      refs.btnLoad.classList.remove('is-hidden');
     }
     createMarkup(data.hits);
 
     if (page === Math.ceil(data.totalHits / 40)) {
-      // refs.btnLoad.classList.add('is-hidden');
+      refs.btnLoad.classList.add('is-hidden');
       Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
       return
+    } 
+  observer.observe(refs.guard);
     }
-    observer.observe(refs.guard);
-  }
   catch (err) {
     console.error(err);
   }
@@ -87,22 +81,22 @@ function resetPage() {
   page = 1;
 }
 
-// async function onLoadMore() {
-//   try {
-//     page += 1;
-//     const data = await makeRequest(searchQuery, page);
-//     createMarkup(data.hits)
-//       if (page === Math.ceil(data.totalHits / 40))
-//       {
-//     refs.btnLoad.classList.add('is-hidden');
-//     Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
-//     }
-//     scroll();
-//   }
-//   catch (err) {
-//     console.error(err);
-//     } 
-// }
+async function onLoadMore() {
+  try {
+    page += 1;
+    const data = await makeRequest(searchQuery, page);
+    createMarkup(data.hits)
+    if (page === Math.ceil(data.totalHits / 40))
+      {
+    refs.btnLoad.classList.add('is-hidden');
+    Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+    }
+    scroll();
+  }
+  catch (err) {
+    console.error(err);
+    } 
+}
 
 function scroll() {
   const { height: cardHeight } = document
@@ -124,19 +118,23 @@ const options = {
 const observer = new IntersectionObserver(handelerPagination, options);
 async function handelerPagination(entries, observer) {
   entries.forEach(async entry => {
-      try {
-        if (entry.isIntersecting) {
+    try {
+      if (entry.isIntersecting) {
+          if ((page === 1) && (page === Math.ceil(data.totalHits / 40))) {
+          observer.observe(refs.guard);
+          onLoadMore().stop
+      }
           page += 1;
           const data = await makeRequest(searchQuery, page);
           createMarkup(data.hits)
-    
           if (page === Math.ceil(data.totalHits / 40)) {
             observer.unobserve(entry.target);
             Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
+            refs.btnLoad.classList.add('is-hidden');
             return;
           }
         }
-      }
+    }
       catch (err) {
         console.log(err)
       }
