@@ -119,7 +119,7 @@ const observer = new IntersectionObserver(handelerPagination, options);
 async function handelerPagination(entries, observer) {
   entries.forEach(async entry => {
           if (page === 1) {
-          entry.preventDefault();
+         observer.preventDefault();
         } else {
           observer.observe(refs.guard);
         }
