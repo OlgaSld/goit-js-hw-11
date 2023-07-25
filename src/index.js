@@ -16,6 +16,8 @@ refs.btnLoad.classList.add('is-hidden');
 
 refs.form.addEventListener('submit', handlerRequest);
 refs.btnLoad.addEventListener('click', onLoadMore);
+refs.checkBox.addEventListener("click", runScroll);
+
 
 async function handlerRequest(e) {
   e.preventDefault();
@@ -43,8 +45,9 @@ async function handlerRequest(e) {
       Notiflix.Notify.info('We are sorry, but you have reached the end of search results.');
       return
     } 
-  observer.observe(refs.guard);
-    }
+  // observer.observe(refs.guard);
+ }
+    
   catch (err) {
     console.error(err);
   }
@@ -57,7 +60,7 @@ function createMarkup(arr) {
   const markupList = arr.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => {
     return `<a class="gallery__link" href=${largeImageURL}>
     <div class="photo-card">
-  <img src="${webformatURL}" alt="${tags}" loading="lazy" width="400" height="200"/>
+  <img src="${webformatURL}" alt="${tags}" loading="lazy" width="300" height="200"/>
   <div class="info">
     <p class="info-item">
       <b>Likes ${likes}</b>
@@ -118,11 +121,6 @@ const options = {
 const observer = new IntersectionObserver(handelerPagination, options);
 async function handelerPagination(entries, observer) {
   entries.forEach(async entry => {
-          if (page === 1) {
-         observer.preventDefault();
-        } else {
-          observer.observe(refs.guard);
-        }
     try {
       if (entry.isIntersecting) {
           page += 1;
@@ -142,3 +140,8 @@ async function handelerPagination(entries, observer) {
     });
 }
 
+function runScroll() {
+  observer.observe(refs.guard);
+  refs.btnLoad.classList.add('is-hidden');
+
+}
