@@ -141,7 +141,11 @@ async function handelerPagination(entries, observer) {
 }
 
 function runScroll() {
-  observer.observe(refs.guard);
-  refs.btnLoad.classList.add('is-hidden');
-
+  if (!refs.checkBox.checked) {
+    observer.unobserve(refs.guard);
+    refs.btnLoad.classList.remove('is-hidden');
+  } else {
+    observer.observe(refs.guard);
+    refs.btnLoad.classList.add('is-hidden');
+  }
 }
